@@ -1,78 +1,79 @@
 with open("input.txt") as f:
+    # Input
     seeds = list(map(lambda x: int(x), f.readline().split(": ")[1].strip().split(" ")))
-    source = ""
-    destination = ""
-    mapped = set()
+
+    # Transform input for challange parts:
+    # seeds = [(s, 1) for s in seeds] # Part 1
+    seeds = [(seeds[i], seeds[i + 1]) for i in range(0, len(seeds), 2)] # Part 2
+
+    transformed = set() # we want to avoid transforming the same seed with the same map twice
     for line in f.readlines():
         line = line.strip()
+        # empty lines hold no information
         if line == "":
             continue
-
-        if line.endswith("map:"):
-            d = line.split(" ")[0].split("-")
-            source = d[2]
-            destination = d[0]
-            print(source, destination)
-            mapped = set()
+        
+        # new map starts
+        if line[-1] == ":":
+            transformed = set() # reset transformations
             continue
-
-        d_start, s_start, map_length = list(map(lambda x: int(x), line.split(" ")))
-        print(d_start, s_start, map_length)
+        
+        # transformation
+        destination, source, length = list(map(lambda x: int(x), line.split(" ")))
         i = 0
-        new_seeds = []
-        new_mapped = set()
+        # source interval denoted as ()
+        # range interval denoted as []
+        nseeds = []
+        ntransformed = set()
         while i < len(seeds):
-            
-            start = seeds[i]
-            length = seeds[i + 1]
-            print(start, length)
-            if i in mapped:
-                print("mapped")
-                new_mapped.add(len(new_seeds))
-                new_seeds.append(seeds[i])
-                new_seeds.append(seeds[i + 1])
-                i += 2
-                continue
+            # interval was already transformed by current map
+            if i in transformed:
+                ntransformed.add(len(nseeds))
+                nseeds.append(seeds[i])
+                i += 1
+                continue            
 
-            if start >= s_start and start < s_start + map_length:
-                print("one")
-                diff = start - s_start
-                limited_length = min(length, map_length - diff)
-                new_seeds.append(d_start + diff)
-                new_seeds.append(limited_length)
-                new_mapped.add(len(new_seeds) - 2)
-                if length > limited_length:
-                    seeds.append(start + limited_length)
-                    seeds.append(length - limited_length)
-                i += 2
-                continue
+            range_start, range_length = seeds[i]
+            # case 0: [] () or () []
+            if range_start + range_length <= source or range_start >= source + length:
+                nseeds.append(seeds[i])
+            # case 1: ( [
+            elif range_start >= source and range_start < source + length:
+                offset = range_start - source
+                inside_length = min(length - offset, range_length)
 
-            if start < s_start and start + length > s_start:
-                print("two")
-                diff = s_start - start
-                limited_length = min(length - diff, map_length)
-                new_mapped.add(len(new_seeds))
-                new_seeds.append(d_start)
-                new_seeds.append(limited_length)
-                if diff > 0:
-                    seeds.append(start)
-                    seeds.append(diff)
-                if length - diff > limited_length:
-                    seeds.append(s_start + map_length)
-                    seeds.append(length - diff - limited_length)
-                i += 2
-                continue
+                # transform the part inside of ( )
+                ntransformed.add(len(nseeds))
+                nseeds.append((destination + offset, inside_length))
+
+                # copy the part outside of ( )
+                if inside_length < range_length:
+                    seeds.append((range_start + inside_length, range_length - inside_length))
+            # case 2: [ ( 
+            elif range_start < source and range_start + range_length > source:
+                offset = source - range_start
+                inside_length = min(length, range_length - offset)
+
+                # transform the part inside of ( )
+                ntransformed.add(len(nseeds))
+                nseeds.append((destination, inside_length))
+
+                # copy the part before the (
+                if offset > 0: 
+                    seeds.append((range_start, offset))
+
+                # copy the part outside of ( )
+                if inside_length + offset < range_length:
+                    seeds.append((source + length, range_length - inside_length - offset))
+            else:
+                # make sure that if statements cover all cases
+                raise TypeError("missed condition", range_start, range_length, source, length)
             
-            print("three")
-            new_seeds.append(start)
-            new_seeds.append(length)
-            i += 2
-        seeds = new_seeds
-        print(seeds)
-        print(new_mapped)
-        mapped = new_mapped
-            
-    ans = float("inf")
-    for i in range(0, len(seeds), 2):
-        ans = min(ans, seeds[i])
-    print(ans)
+            i += 1
+        # overwrite with new data
+        seeds = nseeds
+        transformed = ntransformed
+
+    # Result is the smallest start of an interval   
+    print("Size:", len(seeds))         
+    print("Result:", min(seeds)[0])
