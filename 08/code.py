@@ -4,8 +4,8 @@ with open("input.txt", "r") as file:
     direction = list(file.readline().strip()) 
     file.readline()
 
-    start = 'AAA'
-    end = 'ZZZ'
+    start = 'A'
+    end = 'Z'
     current = []
 
     graph = {}
@@ -18,17 +18,19 @@ with open("input.txt", "r") as file:
 
         if node.endswith(start):
             current.append(node)
+
+    def find_ends(node, i, visited):
+        rel_i = i % len(direction)
+        print(node, rel_i)
+        if (node, rel_i) in visited:
+            print("loop:", i - visited[(node, rel_i)])
+            return
+        visited[(node, rel_i)] = i
+
+        if node.endswith(end):
+            print("end", i)
+        
+        d = 0 if direction[rel_i] == 'L' else 1
+        find_ends(graph[node][d], i+1, visited)
     
-    print(len(graph))
-    
-    i = 0
-    steps = 0
-    while not all([n.endswith(end) for n in current]):
-        next = []
-        d = 0 if direction[i] == 'L' else 1
-        for n in current:
-            next.append(graph[n][d])
-        i = (i+1) % len(direction)
-        current = next
-        steps += 1
-    print(steps)
+    find_ends('ZZZ', 0, {})
