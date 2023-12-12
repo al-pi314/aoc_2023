@@ -6,7 +6,7 @@ with open("input.txt", "r") as file:
 
     start = 'A'
     end = 'Z'
-    current = []
+    origins = []
 
     graph = {}
     for line in file.readlines():
@@ -17,20 +17,18 @@ with open("input.txt", "r") as file:
         graph[node] = connections
 
         if node.endswith(start):
-            current.append(node)
+            origins.append(node)
 
-    def find_ends(node, i, visited):
+    def loop(node, i, visited):
         rel_i = i % len(direction)
-        print(node, rel_i)
-        if (node, rel_i) in visited:
-            print("loop:", i - visited[(node, rel_i)])
+        k = (node, rel_i)
+        print(k)
+        if k in visited:
+            print("loop", visited[k])
             return
-        visited[(node, rel_i)] = i
-
-        if node.endswith(end):
-            print("end", i)
+        visited[k] = i
         
         d = 0 if direction[rel_i] == 'L' else 1
-        find_ends(graph[node][d], i+1, visited)
+        loop(graph[node][d], i + 1, visited)
     
-    find_ends('ZZZ', 0, {})
+    loop('ZZZ', 0, {})
