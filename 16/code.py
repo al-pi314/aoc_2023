@@ -1,5 +1,7 @@
 from collections import deque
 
+# Optimise by storing sets of points visited by each beam
+# When you find a new starting position that crosses the same point in the same direction as some other starting beam you can just create a union of points
 with open("input.txt", "r") as file:
     grid = [list(line.strip()) for line in file.readlines()]
 
