@@ -1,80 +1,70 @@
-from collections import deque
+from bisect import insort
 
 with open("input.txt", "r") as file:
-    # swap = False # Part 1
-    swap = True # Part 2
+    swap = False
 
-    H_to_D = {
-        '0': 'R',
-        '1': 'D',
-        '2': 'L',
-        '3': 'U',
-    }
-    D = {
-        'R': (1, 0),
-        'L': (-1, 0),
-        'U': (0, -1),
-        'D': (0, 1),
-    }
-    
-    dug = set([(0, 0)])
     x = 0
     y = 0
-
-    min_x = 0
-    min_y = 0
-    max_x = 0
-    max_y = 0
+    lines = []
+    dig_size = 0
     for line in file.readlines():
         d, l, c = line.strip().split(" ")
         if swap:
-            d = H_to_D[c[-2]]
-            l = str(int(c[2:-2], 16))
+            d = [(1, 0), (0, 1), (-1, 0), (0, -1)][int(c[-2])]
+            l = int(c[2:-2], 16)
+        else:
+            d = {'R':(1, 0), 'D':(0, 1), 'L':(-1, 0), 'U':(0, -1)}[d]
+            l = int(l)
+     
+        ex = x + d[0] * l
+        ey = y + d[1] * l
+        if ey == y:
+            lines.append((y, min(x, ex), max(x, ex)))
+        dig_size += (abs(ex - x) + abs(ey - y))
+        y = ey
+        x = ex
 
-        d = D[d]
-        l = int(l)      
-
-        for _ in range(l):
-            x += d[0]
-            y += d[1]
-            min_x = min(min_x, x)
-            min_y = min(min_y, y)
-            max_x = max(max_x, x)
-            max_y = max(max_y, y)
-            dug.add((x, y))
-
-
-    visited = set()
-    q = deque([(1, 1)])
+    def intersect(l1, l2):
+        return l1[1] <= l2[1] <= l1[2] or l1[1] <= l2[2] <= l1[2]
+    
     size = 0
-    while len(q) > 0:
-        x, y = q.popleft()
-        if y < min_y or y > max_y:
+    lines.sort()
+    while len(lines) > 0:
+        l = lines.pop(0)
+        
+        for i, e in enumerate(lines):
+            if intersect(l, e) or intersect(e, l):
+                break
+        else:
+            continue
+        print(l)
+        print(e)
+
+        size += max((l[2] - l[1] -1) * (e[0] - l[0] -1), 0)
+        # merge two intervals
+        if l[1] == e[2] or l[2] == e[1]:
+            lines.pop(i)
+            insort(lines, (e[0], min(l[1], e[1]), max(l[2], e[2])))
+            size += 1
+            print(size)
+            print()
             continue
         
-        if x < min_x or x > max_x:
-            continue
-                
-        if (x, y) in visited:
-            continue
-        visited.add((x, y))
-
-        if (x, y) in dug:
+        # retain the bottom interval
+        if l[1] >= e[1] and l[2] <= e[2]:
+            print(size)
+            print()
             continue
 
-        size += 1
-        for (nx, ny) in [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]:
-            q.append((nx, ny))
-
-
-    # for y in range(min_y, max_y +1):
-    #     for x in range(min_x, max_x +1):
-    #         if (x, y) in dug:
-    #             print("#", end="")
-    #         elif (x, y) in visited:
-    #             print('x', end="")
-    #         else:
-    #             print(".", end="")
-    #     print()
-            
-    print(size + len(dug))
+        lines.pop(i)
+        if l[1] < e[1]:
+            size += (e[1] - l[1] - 1) if l[0] != e[0] else 0
+            insort(lines, (e[0], l[1], e[1]))
+            print("l", size, (e[1] - l[1] - 1) if l[0] != e[0] else 0)
+            print()
+        if l[2] > e[2]:
+            size += (l[2] - e[2] - 1) if l[0] != e[0] else 0
+            insort(lines, (e[0], e[2], l[2]))
+            print("r", size,  (l[2] - e[2] - 1) if l[0] != e[0] else 0)
+            print()
+    print(size + dig_size)
