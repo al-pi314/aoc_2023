@@ -31,40 +31,30 @@ with open("input.txt", "r") as file:
     lines.sort()
     while len(lines) > 0:
         l = lines.pop(0)
+
+        # merge
+        while len(lines) > 0 and lines[0][0] == l[0] and (lines[0][1] == l[2] or lines[0][2] == l[1]):
+            e = lines.pop(0)
+            l = (l[0], min(l[1], e[1]), max(l[2], e[2]))
         
+        # find intersections
         for i, e in enumerate(lines):
+            if (l[1] == e[2] or l[2] == e[1]) and (e[1] != e[2]):
+                continue
             if intersect(l, e) or intersect(e, l):
                 break
         else:
             continue
-        print(l)
-        print(e)
-
-        size += max((l[2] - l[1] -1) * (e[0] - l[0] -1), 0)
-        # merge two intervals
-        if l[1] == e[2] or l[2] == e[1]:
-            lines.pop(i)
-            insort(lines, (e[0], min(l[1], e[1]), max(l[2], e[2])))
-            size += 1
-            print(size)
-            print()
-            continue
         
-        # retain the bottom interval
-        if l[1] >= e[1] and l[2] <= e[2]:
-            print(size)
-            print()
-            continue
-
+        size += (l[2] - l[1] + 1) * (e[0] - l[0] + 1)
         lines.pop(i)
+
         if l[1] < e[1]:
-            size += (e[1] - l[1] - 1) if l[0] != e[0] else 0
+            size -= (e[1] - l[1] + 1)
             insort(lines, (e[0], l[1], e[1]))
-            print("l", size, (e[1] - l[1] - 1) if l[0] != e[0] else 0)
-            print()
         if l[2] > e[2]:
-            size += (l[2] - e[2] - 1) if l[0] != e[0] else 0
+            size -= (l[2] - e[2] + 1)
             insort(lines, (e[0], e[2], l[2]))
-            print("r", size,  (l[2] - e[2] - 1) if l[0] != e[0] else 0)
-            print()
-    print(size + dig_size)
+        if l[1] >= e[1] and l[2] <= e[2]:
+            insort(lines, e)        
+    print(size)
