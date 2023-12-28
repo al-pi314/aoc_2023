@@ -130,7 +130,7 @@ with open("input.txt", "r") as file:
         print(load(R, A))
         return R, A
     print(len(rocks))
-    R, A = spin(rocks, anchors, 100)
+    R, A = spin(rocks, anchors, 10000000000)
 
     # Draw
     fixed_anchors = set(anchors)

@@ -27,3 +27,6 @@ with open("input.txt", "r") as file:
                 last = c
         ans += 10 * int(first) + int(last)
     print(ans)
+
+
+# just look at the shortest cycle
